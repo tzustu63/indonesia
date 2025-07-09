@@ -1,4 +1,4 @@
-// /api/send.js (Vercel 版本)
+// /api/send.js (Vercel 最終健壯版本)
 
 export default async function handler(request, response) {
   if (request.method !== "POST") {
@@ -6,8 +6,7 @@ export default async function handler(request, response) {
   }
 
   const userMessage = request.body.message;
-  const n8nWebhookUrl =
-    "https://n8n.harvestwize.com/webhook-test/indonesia_birth"; // 請再次確認此 URL 正確
+  const n8nWebhookUrl = "https://n8n.harvestwize.com/webhook/indonesia_birth";
 
   try {
     const n8nResponse = await fetch(n8nWebhookUrl, {
@@ -16,15 +15,21 @@ export default async function handler(request, response) {
       body: JSON.stringify({ message: userMessage }),
     });
 
-    // 【重要修改】解析 n8n 回傳的資料
     const n8nData = await n8nResponse.json();
+    let outputText = ""; // 先建立一個空字串變數
 
-    // 【重要修改】從回傳的資料中，提取我們真正想要的 'output' 文字
-    // n8nData[0] -> 取得陣列中的第一個元素 (物件)
-    // .output -> 取得該物件中 'output' 欄位的值
-    const outputText = n8nData[0].output;
+    // 【重要修正】增加一個防禦性檢查
+    // 檢查 n8nData 是否為一個陣列、長度大於 0、且第一個元素真的有 output 屬性
+    if (Array.isArray(n8nData) && n8nData.length > 0 && n8nData[0].output) {
+      // 如果條件都滿足，才去讀取 output 的內容
+      outputText = n8nData[0].output;
+    } else {
+      // 如果 n8n 回傳的是空陣列或其他非預期格式，就給一個預設的友好提示
+      console.warn("Received an empty or invalid response from n8n:", n8nData);
+      outputText = "抱歉，我這次沒有得到有效的回覆，請您換個方式再問一次。";
+    }
 
-    // 【重要修改】只將提取出來的文字，用標準格式回傳給前端
+    // 將最終的文字（無論是成功取得的還是預設提示）回傳給前端
     response.status(200).json({ response: outputText });
   } catch (error) {
     console.error("Error in Vercel function:", error);
