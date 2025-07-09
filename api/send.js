@@ -6,7 +6,8 @@ export default async function handler(request, response) {
   }
 
   const userMessage = request.body.message;
-  const n8nWebhookUrl = "https://n8n.harvestwize.com/webhook/indonesia_birth"; // 請再次確認此 URL 正確
+  const n8nWebhookUrl =
+    "https://n8n.harvestwize.com/webhook-test/indonesia_birth"; // 請再次確認此 URL 正確
 
   try {
     const n8nResponse = await fetch(n8nWebhookUrl, {
